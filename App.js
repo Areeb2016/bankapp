@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from './components/screens/home';
 import CustomerScreen from './components/screens/customer';
+import TransactionScreen from './components/screens/transactions';
 import { View, Animated, Easing, Text } from 'react-native'
 
 console.disableYellowBox = true;
@@ -54,6 +55,18 @@ function App(){
         <Stack.Screen name="Customer" component={CustomerScreen} 
         options={{
           title: 'Customer', 
+          headerStyle: {
+            backgroundColor: '#f4511e',
+          },
+          headerTintColor: '#fff', 
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+        />
+        <Stack.Screen name="Transfer" component={TransactionScreen} 
+        options={{
+          title: 'Transactions', 
           headerStyle: {
             backgroundColor: '#f4511e',
           },

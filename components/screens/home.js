@@ -1,12 +1,12 @@
 import "react-native-gesture-handler";
-import React, {useEffect, useState} from 'react'
-import {Card, Input, Button} from 'react-native-elements'
-import {Text, View, StyleSheet, TouchableOpacity, FlatList, Image, ScrollView, SafeAreaView, RefreshControl} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import React, {useCallback, useEffect, useState} from 'react'
+import {Card} from 'react-native-elements'
+import {Text, View, TouchableOpacity, FlatList, SafeAreaView, RefreshControl, StyleSheet} from 'react-native';
 import {openDatabase} from 'react-native-sqlite-storage';
 
 const db = openDatabase({name: 'db.db', createFromLocation: 1});
 
+//timeout for refresh
 const wait = (timeout) => {
   return new Promise(resolve => {
     setTimeout(resolve, timeout);
@@ -18,7 +18,8 @@ export default function HomeScreen({navigation}) {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = React.useCallback(() => {
+//callback for refresh
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
 
     wait(2000).then(() => setRefreshing(false));
@@ -26,6 +27,7 @@ export default function HomeScreen({navigation}) {
     
     let [flatListItems, setFlatListItems] = useState([]);
 
+    //fetching all customers from the table
     useEffect(() => {
         db.transaction((tx) => {
           tx.executeSql('SELECT * FROM tbl_user',
@@ -39,6 +41,7 @@ export default function HomeScreen({navigation}) {
         });
       }, [refreshing]);
 
+      //view for the customer
       let listItemView = (item) => {
         return (
           <View>
@@ -68,9 +71,27 @@ export default function HomeScreen({navigation}) {
                 renderItem={({item}) => listItemView(item)}
               />
             
-            
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Transfer')}>
+              <Text style={styles.text}> View Transactions </Text>
+            </TouchableOpacity>
+
           </View>
         </SafeAreaView>
       );
 
 }
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    backgroundColor: '#f4511e',
+    color: '#ffffff',
+    padding: 10,
+    marginTop: 10,
+    marginLeft: 35,
+    marginRight: 35,
+  },
+  text: {
+    color: '#ffffff',
+  },
+});

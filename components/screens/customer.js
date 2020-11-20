@@ -1,6 +1,6 @@
 import "react-native-gesture-handler";
 import React, {useState, useEffect} from 'react';
-import {Text, View, SafeAreaView, TouchableOpacity, FlatList, Alert, CheckBox, StyleSheet} from 'react-native';
+import {Text, View, SafeAreaView, TouchableOpacity, FlatList, Alert, StyleSheet} from 'react-native';
 import {openDatabase} from 'react-native-sqlite-storage';
 import { Card, Input, Overlay } from 'react-native-elements'
 
@@ -16,6 +16,8 @@ export default function CustomrScreen({route, navigation}) {
   let [userData1, setUserData1] = useState(0);
   let [currentplus, setCurrentplus] = useState(0);
   let [currentminus, setCurrentminus] = useState(0);
+  let [sender, setSender] = useState('')
+  let [reciever, setReciever] = useState('')
 
     const [visible, setVisible] = useState(false);
     const [visible2, setVisible2] = useState(false);
@@ -42,11 +44,12 @@ export default function CustomrScreen({route, navigation}) {
           );
       }; 
 
+  //fetching users balance
     const toggleOverlaycustom = () => {
         setVisible(!visible);
         db.transaction((tx) => {
             tx.executeSql(
-              'SELECT user_balance FROM tbl_user where user_id = ?',
+              'SELECT * FROM tbl_user where user_id = ?',
               [select],
               (tx, results) => {
                 var len = results.rows.length;
@@ -81,6 +84,7 @@ export default function CustomrScreen({route, navigation}) {
       );
     });
 
+    //fetching all customers
     db.transaction((tx) => {
         tx.executeSql('SELECT * FROM tbl_user',
         [],
@@ -94,13 +98,15 @@ export default function CustomrScreen({route, navigation}) {
 
 }, []);
 
+//updating amounts to be entered to database
 const updateAmount = () => {
     setCurrentminus(userData.user_balance - amount);
     setCurrentplus(userData1.user_balance + amount);
 }
 
 const updateUser = () => {
-    console.log("here")
+    
+  //updating the reciever
     db.transaction((tx) => {
         tx.executeSql(
           'UPDATE tbl_user set user_balance=? where user_id=?',
@@ -111,30 +117,53 @@ const updateUser = () => {
         );
       });
 
+    //updating the sender
       db.transaction((tx) => {
         tx.executeSql(
           'UPDATE tbl_user set user_balance=? where user_id=?',
           [currentminus, user_id],
           (tx, results) => {
             console.log('Results', results.rowsAffected);
-            if (results.rowsAffected > 0) {
-              Alert.alert(
-                'Success',
-                'User updated successfully',
-                [
-                  {
-                    text: 'Ok',
-                    onPress: () => navigation.popToTop(),
-                  },
-                ],
-                {cancelable: false},
-              );
+            if (results.rowsAffected > 0) { 
+              updateTable();
             } else alert('Updation Failed');
           },
         );
       });
 }
 
+const updateTable = () => {
+  
+  //updating the transaction table
+  let sender = userData.user_name;
+  let reciever = userData1.user_name;
+  
+  db.transaction(function (tx) {
+    tx.executeSql(
+      'INSERT INTO tbl_transaction (transaction_giver, transaction_reciever, transaction_amount) VALUES (?,?,?)',
+      [sender, reciever, amount],
+      (tx, results) => {
+        console.log('Results', results.rowsAffected);
+        if (results.rowsAffected > 0) {
+          Alert.alert(
+            'Transaction Successfull',
+            '',
+            [
+              {
+                text: 'Ok',
+                onPress: () => navigation.popToTop(),
+              },
+            ],
+            {cancelable: false},
+          );
+        } else alert('Registration Failed');
+      },
+    );
+});
+
+} 
+
+//list view for displaying all customers
   let listItemView = (item) => {
     return (
       <View>
@@ -179,6 +208,7 @@ const updateUser = () => {
       <Text style={styles.text}> Transfer Money </Text>
     </TouchableOpacity>
 
+{/* //View all customer Overlay */}
         <Overlay isVisible={visible} onBackdropPress={toggleOverlay}>
           <Text style={{color: '#111825', fontSize: 18, fontWeight:'bold'}}>Select a Customer to make the transfer</Text>
                 <FlatList
@@ -188,6 +218,7 @@ const updateUser = () => {
               />
         </Overlay>
 
+{/* //Enter Amount Overlay */}
         <Overlay isVisible={visible2} onBackdropPress={toggleOverlay2}>
             <Input placeholder='Amount' label='Enter Amount to Transfer' onChangeText={(e) => setAmount(parseInt(e))} />
         
